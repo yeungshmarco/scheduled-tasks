@@ -1,10 +1,11 @@
+import os
 import smtplib
 import datetime as dt
 import pandas as pd
 import random
 
-MY_EMAIL = "yeungshmarco@gmail.com"
-PWD = "uehuuimzbjdkuldp"
+MY_EMAIL = os.environ.get("MY_EMAIL")
+PWD = os.environ.get("PWD")
 
 df = pd.read_csv("birthdays.csv")
 data = df.to_dict(orient="records")
