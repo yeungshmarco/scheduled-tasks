@@ -1,29 +1,36 @@
+from venv import create
+
+import requests
 import os
-import smtplib
-import datetime as dt
-import pandas as pd
-import random
+from twilio.rest import Client
 
-MY_EMAIL = os.environ.get("MY_EMAIL")
-PWD = os.environ.get("PWD")
+# api_key = "e34d2936925fe334e9cb49cc6e0304bc"
+api_key = os.environ.get("WEATHER_API_KEY")
+account_sid = os.environ.get("ACCOUNT_SID")
+auth_token = os.environ.get("AUTH")
 
-df = pd.read_csv("birthdays.csv")
-data = df.to_dict(orient="records")
+parameters = {
+    "lat": 22.396427,
+    "lon": 114.109497,
+    "appid": api_key,
+    "cnt": 4,
+}
 
-now = dt.datetime.now()
-month = now.month
-day = now.day
+response = requests.get(url="https://api.openweathermap.org/data/2.5/forecast", params=parameters)
+response.raise_for_status()
+print(f"Status Code: {response.status_code}")
+
+data = response.json()["list"]
 for datapoint in data:
-    if datapoint["month"] == month and datapoint["day"] == day:
-        file_chosen = f"letter_templates/letter_{random.randint(1,3)}.txt"
-        with open(file_chosen, "r") as template:
-            contents = template.read()
-            contents = contents.replace("[NAME]", datapoint["name"])
+    weather_id = datapoint["weather"][0]["id"]
+    print(weather_id)
+    if weather_id < 700:
+        client = Client(account_sid, auth_token)
+        message = client.messages.create(
+            body="Bring an umbrella.",
+            from_="whatsapp:+14155238886",
+            to="whatsapp:+85246752419",
+        )
+        print(message.status)
+        break
 
-        with smtplib.SMTP("smtp.gmail.com", 587) as connection:
-            connection.starttls()
-            connection.login(user=MY_EMAIL, password=PWD)
-            connection.sendmail(from_addr=MY_EMAIL,
-                                to_addrs=datapoint["email"],
-                                msg=f"Subject:Happy Birthday!\n\n{contents}")
-    
